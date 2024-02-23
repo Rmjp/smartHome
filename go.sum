@@ -1,0 +1,4 @@
+github.com/gofor-little/env v1.0.16 h1:yj14eJdO/Sqpfj71kM0Ay2tL3oGzIKlIG+tfxCwuV1w=
+github.com/gofor-little/env v1.0.16/go.mod h1:AAAuPuOil4OPPX/TjtvZ5ecmg5ZSQDdLUFz22ZiWcSI=
+github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
+github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
