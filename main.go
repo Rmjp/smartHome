@@ -15,10 +15,13 @@ func main() {
 	tuya.Main()
 	tuya.AirUp()
 	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
+	r.GET("/airup", func(c *gin.Context) {
+		tuya.AirUp()
+		c.JSON(http.StatusOK, gin.H{"message": "Air Conditioner is Up"})
+	})
+	r.GET("/airdown", func(c *gin.Context) {
+		tuya.AirDown()
+		c.JSON(http.StatusOK, gin.H{"message": "Air Conditioner is Down"})
 	})
 	r.Run()
 }
