@@ -1,7 +1,11 @@
 package main
 
 import (
+	"net/http"
+
 	"smartHome/tuya"
+
+	"github.com/gin-gonic/gin"
 )
 
 var (
@@ -10,5 +14,11 @@ var (
 
 func main() {
 	tuya.Main()
-	tuya.GetDevice(tuya.DeviceID)
+	r := gin.Default()
+	r.GET("/ping", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "pong",
+		})
+	})
+	r.Run()
 }
