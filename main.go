@@ -4,7 +4,11 @@ import (
 	"smartHome/tuya"
 )
 
+var (
+	Token string
+)
+
 func main() {
-	tuya.GetToken()
+	tuya.Main()
 	tuya.GetDevice(tuya.DeviceID)
 }

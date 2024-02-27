@@ -18,11 +18,13 @@ import (
 )
 
 var (
-	Token    string
-	Host     string
-	ClientID string
-	Secret   string
-	DeviceID string
+	Token        string
+	Host         string
+	ClientID     string
+	Secret       string
+	DeviceID     string
+	RefreshToken string
+	Time         int64
 )
 
 type TokenResponse struct {
@@ -36,7 +38,17 @@ type TokenResponse struct {
 	T       int64 `json:"t"`
 }
 
-func main() {
+type Device struct {
+	DeviceID string
+	Name     string
+	Type     string
+}
+
+var (
+	Devices []Device
+)
+
+func Main() {
 	if err := env.Load(".env"); err != nil {
 		panic(err)
 	}
@@ -44,12 +56,19 @@ func main() {
 	ClientID = env.Get("ClientID", "")
 	Secret = env.Get("Secret", "")
 	DeviceID = env.Get("DeviceID", "")
-
-	GetToken()
-	GetDevice(DeviceID)
 }
 
-func GetToken() {
+func CheckToken() {
+	if Time == 0 {
+		GetToken()
+		return
+	}
+	if time.Now().Unix()-Time > 7000 {
+		GetRefreshToken()
+	}
+}
+
+func GetToken() (string, error) {
 	method := "GET"
 	body := []byte(``)
 	req, _ := http.NewRequest(method, Host+"/v1.0/token?grant_type=1", bytes.NewReader(body))
@@ -58,7 +77,7 @@ func GetToken() {
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Println(err)
-		return
+		return "", err
 	}
 	defer resp.Body.Close()
 	bs, _ := io.ReadAll(resp.Body)
@@ -68,10 +87,41 @@ func GetToken() {
 
 	if v := ret.Result.AccessToken; v != "" {
 		Token = v
+		RefreshToken = ret.Result.RefreshToken
+		Time = time.Now().Unix()
+		return v, nil
 	}
+	return "", fmt.Errorf("no token")
 }
 
-func GetDevice(deviceId string) {
+func GetRefreshToken() (string, error) {
+	method := "GET"
+	body := []byte(``)
+	req, _ := http.NewRequest(method, Host+"/v1.0/token/"+RefreshToken, bytes.NewReader(body))
+
+	buildHeader(req, body)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+	defer resp.Body.Close()
+	bs, _ := io.ReadAll(resp.Body)
+	ret := TokenResponse{}
+	json.Unmarshal(bs, &ret)
+	log.Println("resp:", string(bs))
+
+	if v := ret.Result.AccessToken; v != "" {
+		Token = v
+		RefreshToken = ret.Result.RefreshToken
+		Time = time.Now().Unix()
+		return v, nil
+	}
+	return "", fmt.Errorf("no token")
+}
+
+func GetDevice(deviceId string) (string, error) {
+	CheckToken()
 	method := "GET"
 	body := []byte(``)
 	req, _ := http.NewRequest(method, Host+"/v1.0/devices/"+deviceId, bytes.NewReader(body))
@@ -80,11 +130,12 @@ func GetDevice(deviceId string) {
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Println(err)
-		return
+		return "", err
 	}
 	defer resp.Body.Close()
 	bs, _ := io.ReadAll(resp.Body)
 	log.Println("resp:", string(bs))
+	return string(bs), nil
 }
 
 func buildHeader(req *http.Request, body []byte) {
