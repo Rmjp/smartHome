@@ -25,6 +25,8 @@ var (
 	DeviceID     string
 	RefreshToken string
 	Time         int64
+	DeviceID_IR  string
+	DeviceID_Air string
 )
 
 type TokenResponse struct {
@@ -38,16 +40,6 @@ type TokenResponse struct {
 	T       int64 `json:"t"`
 }
 
-type Device struct {
-	DeviceID string
-	Name     string
-	Type     string
-}
-
-var (
-	Devices []Device
-)
-
 func Main() {
 	if err := env.Load(".env"); err != nil {
 		panic(err)
@@ -56,6 +48,8 @@ func Main() {
 	ClientID = env.Get("ClientID", "")
 	Secret = env.Get("Secret", "")
 	DeviceID = env.Get("DeviceID", "")
+	DeviceID_IR = env.Get("DeviceID_IR", "")
+	DeviceID_Air = env.Get("DeviceID_Air", "")
 }
 
 func CheckToken() {
@@ -211,4 +205,40 @@ func HmacSha256(message string, secret string) string {
 	h.Write([]byte(message))
 	sha := hex.EncodeToString(h.Sum(nil))
 	return sha
+}
+
+// Air control
+
+func AirUp() (string, error) {
+	CheckToken()
+	method := "POST"
+	body := []byte(`{"code":"temp", "value":23}`)
+	req, _ := http.NewRequest(method, Host+"/v2.0/infrareds/"+DeviceID_IR+"/air-conditioners/"+DeviceID_Air+"/command", bytes.NewReader(body))
+	buildHeader(req, body)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+	defer resp.Body.Close()
+	bs, _ := io.ReadAll(resp.Body)
+	log.Println("resp:", string(bs))
+	return string(bs), nil
+}
+
+func AirDown() (string, error) {
+	CheckToken()
+	method := "POST"
+	body := []byte(`{"code":"temp", "value":24}`)
+	req, _ := http.NewRequest(method, Host+"/v2.0/infrareds/"+DeviceID_IR+"/air-conditioners/"+DeviceID_Air+"/command", bytes.NewReader(body))
+	buildHeader(req, body)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Println(err)
+		return "", err
+	}
+	defer resp.Body.Close()
+	bs, _ := io.ReadAll(resp.Body)
+	log.Println("resp:", string(bs))
+	return string(bs), nil
 }
